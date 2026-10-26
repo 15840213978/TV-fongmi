@@ -25,11 +25,19 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    # 关键修复：在 CI 环境中自动生成 local.properties，告诉 Gradle Android SDK 在哪
+    # 关键修复：生成 local.properties，包含 Android SDK 路径以及用于 CI 的假签名信息
+    # 这样 Gradle 在配置 signingConfigs 时就不会因为找不到文件报错
     - name: Create local.properties
-      run: echo "sdk.dir=$ANDROID_HOME" > local.properties
+      run: |
+        cat <<EOF > local.properties
+        sdk.dir=$ANDROID_HOME
+        storeFile=${{ github.workspace }}/app/build.gradle
+        keyAlias=dummy
+        storePassword=dummy
+        keyPassword=dummy
+        EOF
 
-    # 暂时改为 assembleDebug，避免因缺少签名配置导致 Release 构建失败
+    # 继续使用 assembleDebug，避免因没有真实签名导致 Release 构建失败
     - name: Build with Gradle
       run: ./gradlew assembleDebug --stacktrace
 
