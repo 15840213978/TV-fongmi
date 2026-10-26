@@ -25,13 +25,17 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    - name: Build with Gradle
-      # 这里编译 release 版本。如果需要 Debug 版，把 assembleRelease 改为 assembleDebug
-      run: ./gradlew assembleRelease --stacktrace
+    # 关键修复：在 CI 环境中自动生成 local.properties，告诉 Gradle Android SDK 在哪
+    - name: Create local.properties
+      run: echo "sdk.dir=$ANDROID_HOME" > local.properties
 
+    # 暂时改为 assembleDebug，避免因缺少签名配置导致 Release 构建失败
+    - name: Build with Gradle
+      run: ./gradlew assembleDebug --stacktrace
+
+    # 上传生成的 APK 文件
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: app-release
-        # 请根据你项目的实际输出路径调整，通常是 app/build/outputs/apk/release/
-        path: app/build/outputs/apk/release/*.apk
+        name: app-debug
+        path: app/build/outputs/apk/debug/*.apk
